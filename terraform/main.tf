@@ -1,22 +1,25 @@
-terraform {
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-      Version = "~>3.27"
+# use ubuntu 20 AMI for EC2 instance
+data "aws_ami" "ubuntu" {
+    most_recent = true
+filter {
+        name   = "name"
+        values = ["ubuntu/images/hvm-ssd/*20.04-amd64-server-*"]
     }
-  }
-
-  required_version = ">=0.14.9"
-
-  backend "s3" {
-       bucket = "garynationtfstate"
-       key    = "[Remote_State_S3_Bucket_Key]"
-       region = "east-us-1"
-   }
-
+filter {
+        name   = "virtualization-type"
+        values = ["hvm"]
+    }
+owners = ["099720109477"] # Canonical
 }
-
+# provision to us-east-2 region
 provider "aws" {
-  version = "~>3.0"
-  region  = "east-us-1"
+  region  = "us-east-2"
+}
+resource "aws_instance" "app_server" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t3.micro"
+  key_name      = "app-ssh-key"
+tags = {
+    Name = var.ec2_name
+  }
 }
